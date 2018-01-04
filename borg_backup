@@ -9,17 +9,17 @@
 
 # Set this
 # repo_server_address
-repo_server_addresss=server.example.org
+repo_server_address=server.exmaple.org
 
 # Determine logged in user
 loggedInUser=$(/usr/bin/python -c 'from SystemConfiguration import SCDynamicStoreCopyConsoleUser; import sys; username = (SCDynamicStoreCopyConsoleUser(None, None, None) or [None])[0]; username = [username,""][username in [u"loginwindow", None, u""]]; sys.stdout.write(username + "\n");')
 
 # Get the hostname of the client
-localhostname=$(hostname)
+localhostname=$(/bin/hostname)
 
 # Determine 'now' via date
 # "2018-01-04-085601"
-now=$(date "+%Y-%m-%d-%H%M%S")
+now=$(/bin/date "+%Y-%m-%d-%H%M%S")
 
 # Setting this, so the repo does not need to be given on the commandline:
 export BORG_REPO=${loggedInUser}@${repo_server_address}:backups
@@ -31,8 +31,13 @@ export BORG_REPO=${loggedInUser}@${repo_server_address}:backups
 export BORG_PASSCOMMAND="security find-generic-password -a ${loggedInUser} -s borg-passphrase -w"
 
 # some helpers and error handling:
-info() { printf "%s %s\n" "$(date)" "$*" >&2; }
+info() { printf "%s %s\n" "$(/bin/date)" "$*" >&2; }
 trap 'echo $( date ) Backup interrupted >&2; exit 2' INT TERM
+
+# define borg for launchd to find it
+borg=/usr/local/bin/borg
+
+/Applications/Utilities/terminal-notifier.app/Contents/MacOS/terminal-notifier -title 'debug' -message 'running borg backup now'
 
 # Check to see if we can backup
 # Stolen from https://github.com/rtrouton/CasperCheck/blob/master/script/caspercheck.sh
@@ -44,7 +49,7 @@ CheckForNetwork(){
   local test
 
   if [[ -z "${NETWORKUP:=}" ]]; then
-    test=$(ifconfig -a inet 2>/dev/null | sed -n -e '/127.0.0.1/d' -e '/0.0.0.0/d' -e '/inet/p' | wc -l)
+    test=$(/sbin/ifconfig -a inet 2>/dev/null | sed -n -e '/127.0.0.1/d' -e '/0.0.0.0/d' -e '/inet/p' | wc -l)
     
     if [[ "${test}" -gt 0 ]]; then
       NETWORKUP="-YES-"
@@ -91,7 +96,7 @@ info "Starting backup"
 # Backup the most important directories into an archive named after
 # the machine this script is currently running on:
 
-borg create                                \
+$borg create                                \
     --verbose                              \
     --filter AME                           \
     --list                                 \
@@ -100,7 +105,7 @@ borg create                                \
     --compression lz4                      \
     --exclude-caches                       \
                                            \
-    --exclude '/Users/${loggedInUser}/Library/Caches'           \
+    --exclude ~/Library/Caches           \
     ::${localhostname}-${now}              \
     /Users/${loggedInUser}                 \
 
@@ -117,7 +122,7 @@ info "Pruning repository"
 # limit prune's operation to this machine's archives and not apply to
 # other machines' archives also:
 
-borg prune                                \
+$borg prune                                \
   --list                                  \
   --prefix ${localhostname}-              \
   --show-rc                               \
@@ -160,9 +165,11 @@ fi
 if [[ "${NETWORKUP}" == "-YES-" ]]; then
   info "Network connection appears to be live."
   
-  # Sleeping for 120 seconds to give WiFi time to come online.
-  info "Pausing for two minutes to give WiFi and DNS time to come online."
-  sleep 120
+  # Sleeping for 60 seconds to give WiFi time to come online.
+  info "Pausing for 1 minute to give WiFi and DNS time to come online."
+
+ /Applications/Utilities/terminal-notifier.app/Contents/MacOS/terminal-notifier -title 'debug' -message 'starting network sleep'
+  sleep 60
   CheckSiteNetwork
 
   if [[ "$site_network" == "False" ]]; then
@@ -171,8 +178,10 @@ if [[ "${NETWORKUP}" == "-YES-" ]]; then
  
   if [[ "$site_network" == "True" ]]; then
     info "Access to site network verified"
+    /Applications/Utilities/terminal-notifier.app/Contents/MacOS/terminal-notifier -title 'debug' -message 'borg functions running'
     borgCreate
     borgPrune
+    /Applications/Utilities/terminal-notifier.app/Contents/MacOS/terminal-notifier -title 'debug' -message 'borg done'
   fi
 
 fi
