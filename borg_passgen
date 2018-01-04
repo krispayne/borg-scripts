@@ -1,0 +1,24 @@
+#!/bin/bash
+# Setup password for borg 
+# Creates a random password, stores the EA, stores in keychain.
+# If you don't want to store the password in the JSS, comment out that section.
+
+# Get logged in user
+loggedInUser=$(/usr/bin/python -c 'from SystemConfiguration import SCDynamicStoreCopyConsoleUser; import sys; username = (SCDynamicStoreCopyConsoleUser(None, None, None) or [None])[0]; username = [username,""][username in [u"loginwindow", None, u""]]; sys.stdout.write(username + "\n");')
+
+# define location for password file to be read by JSS EA
+jss_ea_path="/var/hidden/dir"
+
+# create a random password
+borg_password=$(head -c 32 /dev/urandom | base64)
+
+# store the password outside the user's directory
+# in a specific file to be readable by an EA in the JSS
+# We do this because we don't create the password with the user
+# and we also want to be able to get to the backups if needed.
+echo ${borg_password} > ${jss_ea_path}/borg.conf
+chmod 600 ${jss_ea_path}/borg.conf
+
+# add the randomly created password to the logged in user's keychain
+sudo -H -u ${loggedInUser} security add-generic-password -D secret -U -a ${loggedInUser} -s borg-passphrase -w ${borg_password}
+
