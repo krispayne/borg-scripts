@@ -96,18 +96,18 @@ info "Starting backup"
 # Backup the most important directories into an archive named after
 # the machine this script is currently running on:
 
-$borg create                                \
-    --verbose                              \
-    --filter AME                           \
-    --list                                 \
-    --stats                                \
-    --show-rc                              \
-    --compression lz4                      \
-    --exclude-caches                       \
-                                           \
+$borg create                             \
+    --verbose                            \
+    --filter AME                         \
+    --list                               \
+    --stats                              \
+    --show-rc                            \
+    --compression lz4                    \
+    --exclude-caches                     \
+                                         \
     --exclude ~/Library/Caches           \
-    ::${localhostname}-${now}              \
-    /Users/${loggedInUser}                 \
+    ::${localhostname}-${now}            \
+    /Users/${loggedInUser}               \
 
 backup_exit=$?
 
@@ -122,13 +122,13 @@ info "Pruning repository"
 # limit prune's operation to this machine's archives and not apply to
 # other machines' archives also:
 
-$borg prune                                \
-  --list                                  \
-  --prefix ${localhostname}-              \
-  --show-rc                               \
-  --keep-daily    7                       \
-  --keep-weekly   4                       \
-  --keep-monthly  6                       \
+$borg prune                              \
+  --list                                 \
+  --prefix ${localhostname}-             \
+  --show-rc                              \
+  --keep-daily    7                      \
+  --keep-weekly   4                      \
+  --keep-monthly  6                      \
 
 prune_exit=$?
 
