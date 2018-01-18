@@ -14,8 +14,8 @@
 APP_PATH="/path/to"
 BORG_PASSGEN="${APP_PATH}/borg_passgen"
 BORG_INIT="${APP_PATH}/borg_init"
-PASSGEN_ID="com.voleon.borg.passgen"
-INIT_ID="com.voleon.borg.init"
+PASSGEN_ID="com.example.borg.passgen"
+INIT_ID="com.example.borg.init"
 
 # Get logged in user
 loggedInUserName=$(/usr/bin/python -c 'from SystemConfiguration import SCDynamicStoreCopyConsoleUser; import sys; username = (SCDynamicStoreCopyConsoleUser(None, None, None) or [None])[0]; username = [username,""][username in [u"loginwindow", None, u""]]; sys.stdout.write(username + "\n");')
