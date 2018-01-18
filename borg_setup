@@ -16,6 +16,8 @@ BORG_PASSGEN="${APP_PATH}/borg_passgen"
 BORG_INIT="${APP_PATH}/borg_init"
 PASSGEN_ID="com.example.borg.passgen"
 INIT_ID="com.example.borg.init"
+BORG_BACKUP="${APP_PATH}/borg_backup"
+HOURLY_ID="com.example.borg.hourly"
 
 # Get logged in user
 loggedInUserName=$(/usr/bin/python -c 'from SystemConfiguration import SCDynamicStoreCopyConsoleUser; import sys; username = (SCDynamicStoreCopyConsoleUser(None, None, None) or [None])[0]; username = [username,""][username in [u"loginwindow", None, u""]]; sys.stdout.write(username + "\n");')
@@ -23,7 +25,7 @@ loggedInUserName=$(/usr/bin/python -c 'from SystemConfiguration import SCDynamic
 # the UID is needed to run the LaunchAgent
 loggedInUserID=$(stat -f%u /dev/console)
 
-echo "Creating passgen launchd" "yay!"
+echo "Creating passgen launchd"
 # Create a LaunchAgent for the logged in user to call borg_passgen
 (
 cat <<EOF
@@ -42,20 +44,20 @@ cat <<EOF
 EOF
 ) > /Library/LaunchAgents/${PASSGEN_ID}.plist
 
-echo  "Loading passgen launchd" "yay!"
+echo  "Loading passgen launchd"
 # Load the above LaunchAgent as the logged in user
 launchctl bootstrap gui/${loggedInUserID} /Library/LaunchAgents/${PASSGEN_ID}.plist
 
-echo "Sleeping" "ssh!"
+echo "Sleeping"
 # not sure how long I need to sleep here
 sleep 10
 
-echo "UNloading passgen launchd" "yay!"
+echo "UNloading passgen launchd"
 # Unload and destroy the above LaunchAgent
 launchctl bootout gui/${loggedInUserID} /Library/LaunchAgents/${PASSGEN_ID}.plist
 rm -f /Library/LaunchAgents/${PASSGEN_ID}.plist
 
-echo "Creating init launchd" "yay!"
+echo "Creating init launchd"
 # Create a LaunchAgent for the logged in user to call borg_init
 (
 cat <<EOF
@@ -74,15 +76,46 @@ cat <<EOF
 EOF
 ) > /Library/LaunchAgents/${INIT_ID}.plist
 
-echo "Loading init launchd" "yay!"
+echo "Loading init launchd"
 # Load the above LaunchAgent as the logged in user
 launchctl bootstrap gui/${loggedInUserID} /Library/LaunchAgents/${INIT_ID}.plist
 
-echo "Sleeping" "ssh!"
+echo "Sleeping"
 # not sure how long I need to sleep here.
 sleep 10
 
-echo "UNloading init launchd" "yay!"
+echo "UNloading init launchd"
 # Unload and destroy the above LaunchAgent
 launchctl bootout gui/${loggedInUserID} /Library/LaunchAgents/${INIT_ID}.plist
 rm -f /Library/LaunchAgents/${INIT_ID}.plist
+
+echo "Creating borg_backup launchd"
+# Create a LaunchAgent for the logged in user to call borg_backup hourly
+(
+cat <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>${HOURLY_ID}</string>
+  
+  <key>ProgramArguments</key>
+  <array>
+    <string>${BORG_BACKUP}</string>
+  </array>
+  
+  <key>StartInterval</key>
+    <integer>3600</integer>
+  
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>
+EOF
+) > /Library/LaunchAgents/${HOURLY_ID}.plist
+
+echo "Loading borg_backup launchd"
+# Load the above LaunchAgent as the logged in user
+launchctl bootstrap gui/${loggedInUserID} /Library/LaunchAgents/${HOURLY_ID}.plist
+
