@@ -40,7 +40,7 @@ cat <<EOF
   <key>Label</key>
   <string>${PASSGEN_ID}</string>
   <key>Program</key>
-  <string>/Users/kris/git-repos/borg-scripts/message.sh</string>
+  <string>${APP_PATH}/message.sh</string>
   <key>RunAtLoad</key>
   <true/>
 </dict>
@@ -72,7 +72,7 @@ cat <<EOF
   <key>Label</key>
   <string>${INIT_ID}</string>
   <key>Program</key>
-  <string>/Users/kris/git-repos/borg-scripts/message.sh</string>
+  <string>${APP_PATH}/message.sh</string>
   <key>RunAtLoad</key>
   <true/>
 </dict>
