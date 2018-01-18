@@ -104,6 +104,8 @@ $borg create                             \
     --exclude-caches                     \
                                          \
     --exclude ~/Library/Caches           \
+    --exclude ~/Downloads                \
+    --exclude ~/.Trash                   \
     ::${localhostname}-${now}            \
     /Users/${loggedInUser}               \
 
