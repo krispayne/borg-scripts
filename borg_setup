@@ -1,0 +1,82 @@
+#!/bin/bash
+# because I just can't sudo -u :-/
+
+# This will setup borg as the currently logged in user, hopefully. fingers crossed!
+# Workflow:
+# 1. borg setup policy runs from capser, loading this script
+# 2. this scrpt runs, creating launchagents that call borg_passgen and borg_init
+# 3. those scripts are exceuted as the user
+# 4. the passgen files are made and casper catches them during an inventory update
+# 5. within an hour, an initial backup is made
+
+
+# Set up Variables
+APP_PATH="/path/to"
+BORG_PASSGEN="${APP_PATH}/borg_passgen"
+BORG_INIT="${APP_PATH}/borg_init"
+PASSGEN_ID="com.voleon.borg.passgen"
+INIT_ID="com.voleon.borg.init"
+
+# Get logged in user
+loggedInUserName=$(/usr/bin/python -c 'from SystemConfiguration import SCDynamicStoreCopyConsoleUser; import sys; username = (SCDynamicStoreCopyConsoleUser(None, None, None) or [None])[0]; username = [username,""][username in [u"loginwindow", None, u""]]; sys.stdout.write(username + "\n");')
+
+# the UID is needed to run the LaunchAgent
+loggedInUserID=$(stat -f%u /dev/console)
+
+# Create a LaunchAgent for the logged in user to call borg_passgen
+(
+cat <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>${PASSGEN_ID}</string>
+  <key>Program</key>
+  <string>/Users/kris/git-repos/borg-scripts/message.sh</string>
+  <key>RunAtLoad</key>
+  <true/>
+</dict>
+</plist>
+EOF
+) > /Library/LaunchAgents/${PASSGEN_ID}.plist
+
+# Load the above LaunchAgent as the logged in user
+launchctl bootstrap gui/${loggedInUserID} /Library/LaunchAgents/${PASSGEN_ID}.plist
+
+# not sure how long I need to sleep here
+sleep 10
+
+# Unload and destroy the above LaunchAgent
+launchctl bootout gui/${loggedInUserID} /Library/LaunchAgents/${PASSGEN_ID}.plist
+rm -f /Library/LaunchAgents/${PASSGEN_ID}.plist
+
+# Create a LaunchAgent for the logged in user to call borg_init
+(
+cat <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>${INIT_ID}</string>
+  <key>Program</key>
+  <string>/Users/kris/git-repos/borg-scripts/message.sh</string>
+  <key>RunAtLoad</key>
+  <true/>
+</dict>
+</plist>
+EOF
+) > /Library/LaunchAgents/${INIT_ID}.plist
+
+# Load the above LaunchAgent as the logged in user
+launchctl bootstrap gui/${loggedInUserID} /Library/LaunchAgents/${INIT_ID}.plist
+
+# not sure how long I need to sleep here.
+sleep 10
+
+# Unload and destroy the above LaunchAgent
+launchctl bootout gui/${loggedInUserID} /Library/LaunchAgents/${INIT_ID}.plist
+rm -f /Library/LaunchAgents/${INIT_ID}.plist
+
+#exit 0

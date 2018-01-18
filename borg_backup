@@ -37,8 +37,6 @@ trap 'echo $( date ) Backup interrupted >&2; exit 2' INT TERM
 # define borg for launchd to find it
 borg=/usr/local/bin/borg
 
-/Applications/Utilities/terminal-notifier.app/Contents/MacOS/terminal-notifier -title 'debug' -message 'running borg backup now'
-
 # Check to see if we can backup
 # Stolen from https://github.com/rtrouton/CasperCheck/blob/master/script/caspercheck.sh
 # Thanks, Rich.
@@ -167,8 +165,6 @@ if [[ "${NETWORKUP}" == "-YES-" ]]; then
   
   # Sleeping for 60 seconds to give WiFi time to come online.
   info "Pausing for 1 minute to give WiFi and DNS time to come online."
-
- /Applications/Utilities/terminal-notifier.app/Contents/MacOS/terminal-notifier -title 'debug' -message 'starting network sleep'
   sleep 60
   CheckSiteNetwork
 
@@ -178,10 +174,8 @@ if [[ "${NETWORKUP}" == "-YES-" ]]; then
  
   if [[ "$site_network" == "True" ]]; then
     info "Access to site network verified"
-    /Applications/Utilities/terminal-notifier.app/Contents/MacOS/terminal-notifier -title 'debug' -message 'borg functions running'
     borgCreate
     borgPrune
-    /Applications/Utilities/terminal-notifier.app/Contents/MacOS/terminal-notifier -title 'debug' -message 'borg done'
   fi
 
 fi
