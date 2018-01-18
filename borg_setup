@@ -25,6 +25,10 @@ loggedInUserName=$(/usr/bin/python -c 'from SystemConfiguration import SCDynamic
 # the UID is needed to run the LaunchAgent
 loggedInUserID=$(stat -f%u /dev/console)
 
+
+echo "setting up APP_PATH and borg.conf"
+chmod +w ${loggedInUserName} ${APP_PATH}
+
 echo "Creating passgen launchd"
 # Create a LaunchAgent for the logged in user to call borg_passgen
 (
