@@ -23,13 +23,7 @@ loggedInUserName=$(/usr/bin/python -c 'from SystemConfiguration import SCDynamic
 # the UID is needed to run the LaunchAgent
 loggedInUserID=$(stat -f%u /dev/console)
 
-
-# temp notification system
-notify () {
-/Applications/Utilities/terminal-notifier.app/Contents/MacOS/terminal-notifier -title "$1" -message "$2"
-}
-
-notify "Creating passgen launchd" "yay!"
+echo "Creating passgen launchd" "yay!"
 # Create a LaunchAgent for the logged in user to call borg_passgen
 (
 cat <<EOF
@@ -40,7 +34,7 @@ cat <<EOF
   <key>Label</key>
   <string>${PASSGEN_ID}</string>
   <key>Program</key>
-  <string>${APP_PATH}/message.sh</string>
+  <string>${BORG_PASSGEN}</string>
   <key>RunAtLoad</key>
   <true/>
 </dict>
@@ -48,20 +42,20 @@ cat <<EOF
 EOF
 ) > /Library/LaunchAgents/${PASSGEN_ID}.plist
 
-notify "Loading passgen launchd" "yay!"
+echo  "Loading passgen launchd" "yay!"
 # Load the above LaunchAgent as the logged in user
 launchctl bootstrap gui/${loggedInUserID} /Library/LaunchAgents/${PASSGEN_ID}.plist
 
-notify "Sleeping" "ssh!"
+echo "Sleeping" "ssh!"
 # not sure how long I need to sleep here
 sleep 10
 
-notify "UNloading passgen launchd" "yay!"
+echo "UNloading passgen launchd" "yay!"
 # Unload and destroy the above LaunchAgent
 launchctl bootout gui/${loggedInUserID} /Library/LaunchAgents/${PASSGEN_ID}.plist
 rm -f /Library/LaunchAgents/${PASSGEN_ID}.plist
 
-notify "Creating passgen launchd" "yay!"
+echo "Creating init launchd" "yay!"
 # Create a LaunchAgent for the logged in user to call borg_init
 (
 cat <<EOF
@@ -72,7 +66,7 @@ cat <<EOF
   <key>Label</key>
   <string>${INIT_ID}</string>
   <key>Program</key>
-  <string>${APP_PATH}/message.sh</string>
+  <string>${BORG_INIT}</string>
   <key>RunAtLoad</key>
   <true/>
 </dict>
@@ -80,17 +74,15 @@ cat <<EOF
 EOF
 ) > /Library/LaunchAgents/${INIT_ID}.plist
 
-notify "Loading passgen launchd" "yay!"
+echo "Loading init launchd" "yay!"
 # Load the above LaunchAgent as the logged in user
 launchctl bootstrap gui/${loggedInUserID} /Library/LaunchAgents/${INIT_ID}.plist
 
-notify "Sleeping" "ssh!"
+echo "Sleeping" "ssh!"
 # not sure how long I need to sleep here.
 sleep 10
 
-notify "UNloading passgen launchd" "yay!"
+echo "UNloading init launchd" "yay!"
 # Unload and destroy the above LaunchAgent
 launchctl bootout gui/${loggedInUserID} /Library/LaunchAgents/${INIT_ID}.plist
 rm -f /Library/LaunchAgents/${INIT_ID}.plist
-
-#exit 0
