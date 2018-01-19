@@ -17,3 +17,6 @@ export BORG_PASSCOMMAND="security find-generic-password -a ${loggedInUser} -s bo
 # Initialize the borg repo on the backup server
 borg init --encryption=repokey ${REPO}
 
+/Applications/Utilities/terminal-notifier.app/Contents/MacOS/terminal-notifier \
+    -message "I made it past the init, did it work?" \
+    -title "from script $(basename $)"

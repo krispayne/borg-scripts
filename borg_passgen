@@ -23,3 +23,7 @@ echo ${borg_password} > ${jss_ea_path}/.borgpass
 #sudo -H -u ${loggedInUser} security add-generic-password -D secret -U -a ${loggedInUser} -s borg-passphrase -w ${borg_password}
 security add-generic-password -D secret -U -a ${loggedInUser} -s borg-passphrase -w ${borg_password}
 
+
+/Applications/Utilities/terminal-notifier.app/Contents/MacOS/terminal-notifier \
+    -message "I made it past adding to the keychain and writing to .borgpass. Did it work?" \
+      -title "from script $(basename $0)"
