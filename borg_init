@@ -6,7 +6,9 @@
 loggedInUser=$(/usr/bin/python -c 'from SystemConfiguration import SCDynamicStoreCopyConsoleUser; import sys; username = (SCDynamicStoreCopyConsoleUser(None, None, None) or [None])[0]; username = [username,""][username in [u"loginwindow", None, u""]]; sys.stdout.write(username + "\n");')
 
 # repo_server_address
-repo_server_address=server.example.org
+repo_server_address=example.org
+
+ssh-keyscan ${repo_server_address} >>/Users/${loggedInUser}/.ssh/known_hosts
 
 # Repo address
 REPO=${loggedInUser}@${repo_server_address}:backups

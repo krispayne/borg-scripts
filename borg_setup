@@ -5,19 +5,19 @@
 # Workflow:
 # 1. borg setup policy runs from capser, loading this script
 # 2. this scrpt runs, creating launchagents that call borg_passgen and borg_init
-# 3. those scripts are exceuted as the user
+# 3. those scripts are executed as the user
 # 4. the passgen files are made and casper catches them during an inventory update
 # 5. within an hour, an initial backup is made
 
-
 # Set up Variables
-APP_PATH="/path/to"
+repo_server_address="example.org"
+APP_PATH="/var/exmaple"
 BORG_PASSGEN="${APP_PATH}/borg_passgen"
 BORG_INIT="${APP_PATH}/borg_init"
-PASSGEN_ID="com.example.borg.passgen"
-INIT_ID="com.example.borg.init"
+PASSGEN_ID="org.example.borg.passgen"
+INIT_ID="org.example.borg.init"
 BORG_BACKUP="${APP_PATH}/borg_backup"
-HOURLY_ID="com.example.borg.hourly"
+HOURLY_ID="org.example.borg.hourly"
 
 # Get logged in user
 loggedInUserName=$(/usr/bin/python -c 'from SystemConfiguration import SCDynamicStoreCopyConsoleUser; import sys; username = (SCDynamicStoreCopyConsoleUser(None, None, None) or [None])[0]; username = [username,""][username in [u"loginwindow", None, u""]]; sys.stdout.write(username + "\n");')
@@ -25,7 +25,43 @@ loggedInUserName=$(/usr/bin/python -c 'from SystemConfiguration import SCDynamic
 # the UID is needed to run the LaunchAgent
 loggedInUserID=$(stat -f%u /dev/console)
 
+ssh-keyscan ${repo_server_address} >>/Users/${loggedInUserName}/.ssh/known_hosts
+
+# Check to see if we can reach the backup server
+# Stolen from https://github.com/rtrouton/CasperCheck/blob/master/script/caspercheck.sh
+# Thanks, Rich.
+
+CheckForNetwork(){
+
+  # Determine if the network is up by looking for any non-loopback network interfaces.
+  local test
+
+  if [[ -z "${NETWORKUP:=}" ]]; then
+    test=$(/sbin/ifconfig -a inet 2>/dev/null | sed -n -e '/127.0.0.1/d' -e '/0.0.0.0/d' -e '/inet/p' | wc -l)
+    
+    if [[ "${test}" -gt 0 ]]; then
+      NETWORKUP="-YES-"
+    else    
+      NETWORKUP="-NO-"
+    fi
+
+  fi
+}
+        
+CheckSiteNetwork (){
+  site_network="False"
+  ssh_check=$(echo quit | telnet ${repo_server_address} 22 2>/dev/null | grep Connected)
+
+  if [[ "${ssh_check}" == "Connected to ${repo_server_address}." ]]; then
+    site_network="True"
+  else
+    site_network="False"
+  fi
+}
+
+borgpassgen () {
 echo "Creating passgen launchd"
+
 # Create a LaunchAgent for the logged in user to call borg_passgen
 (
 cat <<EOF
@@ -50,13 +86,15 @@ launchctl bootstrap gui/${loggedInUserID} /Library/LaunchAgents/${PASSGEN_ID}.pl
 
 echo "Sleeping"
 # not sure how long I need to sleep here
-sleep 10
+sleep 30
 
 echo "UNloading passgen launchd"
 # Unload and destroy the above LaunchAgent
 launchctl bootout gui/${loggedInUserID} /Library/LaunchAgents/${PASSGEN_ID}.plist
 rm -f /Library/LaunchAgents/${PASSGEN_ID}.plist
+}
 
+borginit () {
 echo "Creating init launchd"
 # Create a LaunchAgent for the logged in user to call borg_init
 (
@@ -88,7 +126,9 @@ echo "UNloading init launchd"
 # Unload and destroy the above LaunchAgent
 launchctl bootout gui/${loggedInUserID} /Library/LaunchAgents/${INIT_ID}.plist
 rm -f /Library/LaunchAgents/${INIT_ID}.plist
+}
 
+borgbackup () {
 echo "Creating borg_backup launchd"
 # Create a LaunchAgent for the logged in user to call borg_backup hourly
 (
@@ -118,4 +158,54 @@ EOF
 echo "Loading borg_backup launchd"
 # Load the above LaunchAgent as the logged in user
 launchctl bootstrap gui/${loggedInUserID} /Library/LaunchAgents/${HOURLY_ID}.plist
+}
 
+# Wait up to 30 minutes for a network connection to become 
+# available which doesn't use a loopback address. This 
+# is a condition which may occur if this script is run by 
+# a LaunchDaemon at boot time.
+#
+# The network connection check will occur every 5 seconds
+# until the 30 minute limit is reached.
+
+echo "Checking for active network connection."
+
+CheckForNetwork
+i=1
+while [[ "${NETWORKUP}" != "-YES-" ]] && [[ $i -ne 360 ]]
+do
+  sleep 5
+  NETWORKUP=
+  CheckForNetwork
+  echo $i
+  i=$(( $i + 1 ))
+done
+
+# If no network connection is found within 30 minutes,
+# the script will exit.
+
+if [[ "${NETWORKUP}" != "-YES-" ]]; then
+  echo "Error: Network connection check failed."
+  exit 1
+fi
+
+if [[ "${NETWORKUP}" == "-YES-" ]]; then
+  echo "Network connection appears to be live."
+  
+  # Sleeping for 60 seconds to give WiFi time to come online.
+  echo "Pausing for 1 minute to give WiFi and DNS time to come online."
+  sleep 60
+  CheckSiteNetwork
+
+  if [[ "$site_network" == "False" ]]; then
+    echo "Error: Site network verification failed."
+    exit 1
+  fi 
+ 
+  if [[ "$site_network" == "True" ]]; then
+    echo "Access to site network verified"
+    borgpassgen
+    borginit
+    borgbackup
+  fi
+fi

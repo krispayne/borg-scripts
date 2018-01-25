@@ -9,7 +9,7 @@
 
 # Set this
 # repo_server_address
-repo_server_address=server.exmaple.org
+repo_server_address=example.org
 
 # Determine logged in user
 loggedInUser=$(/usr/bin/python -c 'from SystemConfiguration import SCDynamicStoreCopyConsoleUser; import sys; username = (SCDynamicStoreCopyConsoleUser(None, None, None) or [None])[0]; username = [username,""][username in [u"loginwindow", None, u""]]; sys.stdout.write(username + "\n");')
@@ -59,37 +59,17 @@ CheckForNetwork(){
 }
         
 CheckSiteNetwork (){
-
-  #  CheckSiteNetwork function adapted from Facebook's check_corp function script.
-  #  check_corp script available on Facebook's IT-CPE Github repo:
-  #
-  # check_corp:
-  #   This script verifies a system is on the corporate network.
-  #   Input: CORP_URL= set this to a hostname on your corp network
-  #   Optional ($1) contains a parameter that is used for testing.
-  #   Output: Returns a check_corp variable that will return "True" if on 
-  #   corp network, "False" otherwise.
-  #   If a parameter is passed ($1), the check_corp variable will return it
-  #   This is useful for testing scripts where you want to force check_corp
-  #   to be either "True" or "False"
-  # USAGE: 
-  #   check_corp         # No parameter passed
-  #   check_corp "True"  # Parameter of "True" is passed and returned
-
-
   site_network="False"
-  ping=$(host -W .5 $repo_server_address)
+  ssh_check=$(ssh ${repo_server_address} "hostname")
 
-  # If the ping fails - site_network="False"
-  [[ $? -eq 0 ]] && site_network="True"
-
-  # Check if we are using a test
-  [[ -n "$1" ]] && site_network="$1"
+  if [[ "${ssh_check}" == "${repo_server_address}" ]]; then
+    site_network="True"
+  else
+    site_network="False"
+  fi
 }
 
 borgCreate(){
-
-info "Starting backup"
 
 # Backup the most important directories into an archive named after
 # the machine this script is currently running on:
@@ -159,7 +139,8 @@ done
 # the script will exit.
 
 if [[ "${NETWORKUP}" != "-YES-" ]]; then
-  info "Network connection appears to be offline. Exiting."
+  echo "Error: Network connection check failed."
+  exit 1
 fi
 
 if [[ "${NETWORKUP}" == "-YES-" ]]; then
@@ -171,13 +152,16 @@ if [[ "${NETWORKUP}" == "-YES-" ]]; then
   CheckSiteNetwork
 
   if [[ "$site_network" == "False" ]]; then
-    info "Unable to verify access to site network. Exiting."
+    echo "Error: Site network verification failed."
+    exit 1
   fi 
  
   if [[ "$site_network" == "True" ]]; then
     info "Access to site network verified"
+    info "Starting backup"
     borgCreate
     borgPrune
+    info "Backup Complete"
   fi
 
 fi
