@@ -31,7 +31,7 @@ export BORG_REPO=${loggedInUser}@${repo_server_address}:backups
 export BORG_PASSCOMMAND="security find-generic-password -a ${loggedInUser} -s borg-passphrase -w"
 
 # some helpers and error handling:
-info() { printf "%s %s\n" "$(/bin/date)" "$*" >&2; }
+info() { printf '%s %s\n' "$(/bin/date)" "$*" >&2; }
 trap 'echo $( date ) Backup interrupted >&2; exit 2' INT TERM
 
 # define borg for launchd to find it
@@ -86,8 +86,8 @@ $borg create                             \
     --exclude ~/Library/Caches           \
     --exclude ~/Downloads                \
     --exclude ~/.Trash                   \
-    ::${localhostname}-${now}            \
-    /Users/${loggedInUser}               \
+    ::"${localhostname}"-"${now}"        \
+    /Users/"${loggedInUser}"             \
 
 backup_exit=$?
 
@@ -104,7 +104,7 @@ info "Pruning repository"
 
 $borg prune                              \
   --list                                 \
-  --prefix ${localhostname}-             \
+  --prefix "${localhostname}"-             \
   --show-rc                              \
   --keep-daily    7                      \
   --keep-weekly   4                      \
@@ -132,7 +132,7 @@ do
   NETWORKUP=
   CheckForNetwork
   echo $i
-  i=$(( $i + 1 ))
+  i=$(( $i + 1 ))0
 done
 
 # If no network connection is found within 30 minutes,

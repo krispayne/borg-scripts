@@ -8,7 +8,7 @@ loggedInUser=$(/usr/bin/python -c 'from SystemConfiguration import SCDynamicStor
 # repo_server_address
 repo_server_address=example.org
 
-ssh-keyscan ${repo_server_address} >>/Users/${loggedInUser}/.ssh/known_hosts
+ssh-keyscan ${repo_server_address} >>/Users/"${loggedInUser}"/.ssh/known_hosts
 
 # Repo address
 REPO=${loggedInUser}@${repo_server_address}:backups
@@ -17,4 +17,4 @@ REPO=${loggedInUser}@${repo_server_address}:backups
 export BORG_PASSCOMMAND="security find-generic-password -a ${loggedInUser} -s borg-passphrase -w"
 
 # Initialize the borg repo on the backup server
-/usr/local/bin/borg init --encryption=repokey ${REPO}
+/usr/local/bin/borg init --encryption=repokey "${REPO}"

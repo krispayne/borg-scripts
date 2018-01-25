@@ -25,7 +25,7 @@ loggedInUserName=$(/usr/bin/python -c 'from SystemConfiguration import SCDynamic
 # the UID is needed to run the LaunchAgent
 loggedInUserID=$(stat -f%u /dev/console)
 
-ssh-keyscan ${repo_server_address} >>/Users/${loggedInUserName}/.ssh/known_hosts
+ssh-keyscan ${repo_server_address} >>/Users/"${loggedInUserName}"/.ssh/known_hosts
 
 # Check to see if we can reach the backup server
 # Stolen from https://github.com/rtrouton/CasperCheck/blob/master/script/caspercheck.sh
@@ -82,7 +82,7 @@ EOF
 
 echo  "Loading passgen launchd"
 # Load the above LaunchAgent as the logged in user
-launchctl bootstrap gui/${loggedInUserID} /Library/LaunchAgents/${PASSGEN_ID}.plist
+launchctl bootstrap gui/"${loggedInUserID}" /Library/LaunchAgents/${PASSGEN_ID}.plist
 
 echo "Sleeping"
 # not sure how long I need to sleep here
@@ -90,7 +90,7 @@ sleep 30
 
 echo "UNloading passgen launchd"
 # Unload and destroy the above LaunchAgent
-launchctl bootout gui/${loggedInUserID} /Library/LaunchAgents/${PASSGEN_ID}.plist
+launchctl bootout gui/"${loggedInUserID}" /Library/LaunchAgents/${PASSGEN_ID}.plist
 rm -f /Library/LaunchAgents/${PASSGEN_ID}.plist
 }
 
@@ -116,7 +116,7 @@ EOF
 
 echo "Loading init launchd"
 # Load the above LaunchAgent as the logged in user
-launchctl bootstrap gui/${loggedInUserID} /Library/LaunchAgents/${INIT_ID}.plist
+launchctl bootstrap gui/"${loggedInUserID}" /Library/LaunchAgents/${INIT_ID}.plist
 
 echo "Sleeping"
 # not sure how long I need to sleep here.
@@ -124,7 +124,7 @@ sleep 30
 
 echo "UNloading init launchd"
 # Unload and destroy the above LaunchAgent
-launchctl bootout gui/${loggedInUserID} /Library/LaunchAgents/${INIT_ID}.plist
+launchctl bootout gui/"${loggedInUserID}" /Library/LaunchAgents/${INIT_ID}.plist
 rm -f /Library/LaunchAgents/${INIT_ID}.plist
 }
 
@@ -157,7 +157,7 @@ EOF
 
 echo "Loading borg_backup launchd"
 # Load the above LaunchAgent as the logged in user
-launchctl bootstrap gui/${loggedInUserID} /Library/LaunchAgents/${HOURLY_ID}.plist
+launchctl bootstrap gui/"${loggedInUserID}" /Library/LaunchAgents/${HOURLY_ID}.plist
 }
 
 # Wait up to 30 minutes for a network connection to become 
