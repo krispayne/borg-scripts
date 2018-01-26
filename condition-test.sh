@@ -17,3 +17,6 @@ if [[ -e "/Users" ]]; then
 fi
 
 # fin.
+# after you ./ this, run `echo $?` to see the result of it.
+# for the first test, the result should be `0`
+# for the second test, the result should be `1`
