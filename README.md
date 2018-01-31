@@ -19,6 +19,7 @@ Currently, I'm still testing everything, but running them manually works.
   * borg_passgen is called at load of it's LaunchAgent, which is destroyed after 30 seconds.
   * borg_init is called at load of it's LaunchAgent, which is destroyed after 30 seconds.
   * borg_hourly's LaunchAgent is created, then loaded. It is not destroyed.
+  * This MUST be run either by hand (`bash borg_setup`) or uploaded to the JSS. It will not work correctly if ran as a 'process' via a policy.
 * borg_passgen is ran once with a LaunchAgent from borg_setup 
   * it assumes the correct person is logged in, and stores the password in their keychain and in .borgpass.
   * it assumes the user on the client is also a user on the server (LDAP, AD, whatever.)
