@@ -86,6 +86,8 @@ $borg create                             \
     --exclude ~/Library/Caches           \
     --exclude ~/Downloads                \
     --exclude ~/.Trash                   \
+    --exclude-from ~/.borgignore         \
+                                         \
     ::"${localhostname}"-"${now}"        \
     /Users/"${loggedInUser}"             \
 
