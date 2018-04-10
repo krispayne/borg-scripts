@@ -1,11 +1,14 @@
 #!/bin/bash
-# grabs the content of a file and prints it to the result var
 
-borg_pass_file=/var/hidden/dir/.borgpass
+# Determine logged in user
+loggedInUser=$(/usr/bin/python -c 'from SystemConfiguration import SCDynamicStoreCopyConsoleUser; import sys; username = (SCDynamicStoreCopyConsoleUser(None, None, None) or [None])[0]; username = [username,""][username in [u"loginwindow", None, u""]]; sys.stdout.write(username + "\n");')
 
-if [ -e ${borg_pass_file} ];then
-  borg_pass=$(cat ${borg_pass_file})
-  echo "<result>${borg_pass}</result>"
+KEYCHAIN=$(security find-generic-password -a $loggedInUser -s borg-passphrase -w)
+
+if [[ -n ${KEYCHAIN} ]]; then
+    RESULT="${KEYCHAIN}"
 else
-  echo "<result>No borg_pass_file</result>"
+    RESULT="Not Found in keychain."
 fi
+
+echo "<result>${RESULT}</result>"
