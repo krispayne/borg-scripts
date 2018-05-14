@@ -70,19 +70,19 @@ CheckSiteNetwork (){
 }
 
 borgCreate(){
-
+# https://borgbackup.readthedocs.io/en/stable/usage/create.html
 # Backup the most important directories into an archive named after
 # the machine this script is currently running on:
 
-$borg create                             \
+$borg create                             \ 
+    --one-file-system                    \ 
     --verbose                            \
-    --filter AME                         \
+    --filter AME                         \ 
     --list                               \
     --stats                              \
     --show-rc                            \
     --compression lz4                    \
     --exclude-caches                     \
-                                         \
     --exclude ~/Library/Caches           \
     --exclude ~/Downloads                \
     --exclude ~/.Trash                   \
