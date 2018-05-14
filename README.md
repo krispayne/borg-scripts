@@ -11,8 +11,7 @@ These scripts make a lot of assumptions:
 
 This is an attempt at automating the initialization, creation, and execution of borg backups to a remote server with per-user repos and encryption. This also takes into account that the password/keys are backed up in the encrypted backup and are lost if the client is lost and the user doesn't know the password, which in this case, they won't since it's created for them randomly. The passgen script will sideload a file with the password that you can then escrow. I wrote it to be picked up by a Jamf Pro Extension Attribute for use in my environment.
 
-Currently, I'm still testing everything, but running them manually works. 
-
+These scripts/methods have been working in production in my environment since Janurary 2018.
 
 * borg_setup
   * This is a big one. It creates the user's LaunchAgents for passgen and init and hourly.
